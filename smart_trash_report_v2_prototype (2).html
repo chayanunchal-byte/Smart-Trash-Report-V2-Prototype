@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Trash Report (PAKALOLO GROUP) - Design Version 2 (Public Areas & Custom Upload)</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Fonts: Kanit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom CSS Animations & Utilities */
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Hide scrollbar for clean UI */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .modal-enter {
+      animation: modalSlideUp 0.3s ease-out forwards;
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .map-grid-bg {
+      background-color: #1e293b;
+      background-image: radial-gradient(#334155 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex justify-center items-center p-0 md:p-4">
+
+  <!-- Mobile Outer Container / Frame for Presentation -->
+  <div class="w-full max-w-md h-[100vh] md:h-[880px] bg-slate-900 md:rounded-3xl shadow-2xl flex flex-col relative overflow-hidden border border-slate-800">
+
+    <!-- TOP HEADER -->
+    <header class="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 sticky top-0 z-30 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid font-bold fa-recycle text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-1.5">
+            <h1 class="font-bold text-sm text-slate-100 tracking-wide">PAKALOLO GROUP</h1>
+            <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-semibold px-1.5 py-0.2 rounded border border-emerald-500/30">V2 (Native File Upload)</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-light">Smart Trash Report System</p>
+        </div>
+      </div>
+
+      <!-- Live Refresh & Status Badge -->
+      <div class="flex items-center space-x-2">
+        <button id="refreshBtn" onclick="triggerLiveRefresh()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all border border-slate-700/60 active:scale-95 flex items-center justify-center" title="อัปเดตข้อมูล Real-time">
+          <i id="refreshIcon" class="fa-solid fa-rotate text-xs"></i>
+        </button>
+        <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700/50">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          <span class="text-[11px] font-medium text-emerald-400">Live</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- V1 vs V2 Comparison Banner Switcher -->
+    <div class="bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 border-b border-emerald-800/40 px-3 py-1.5 flex items-center justify-between text-xs text-slate-300">
+      <div class="flex items-center space-x-1.5">
+        <i class="fa-solid fa-upload text-emerald-400 text-xs"></i>
+        <span class="font-medium text-[11px] text-emerald-200">อัปโหลดไฟล์รูปภาพของคุณเองจากเครื่องได้แล้ว</span>
+      </div>
+      <button onclick="toggleComparisonModal()" class="text-[11px] bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 transition flex items-center space-x-1">
+        <span>ดูสรุป Feedback</span>
+        <i class="fa-solid fa-chevron-right text-[9px]"></i>
+      </button>
+    </div>
+
+    <!-- MAIN CONTENT CONTAINER (Scrollable) -->
+    <main class="flex-1 overflow-y-auto no-scrollbar relative p-4 pb-24" id="mainContent">
+      
+      <!-- PAGE 1: DASHBOARD -->
+      <section id="page-dashboard" class="space-y-4">
+        <!-- Banner Highlight -->
+        <div class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 rounded-2xl p-4 shadow-xl relative overflow-hidden text-white border border-emerald-500/30">
+          <div class="absolute -right-4 -bottom-4 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <div>
+              <span class="bg-emerald-950/60 text-emerald-200 text-[11px] px-2.5 py-0.5 rounded-full font-medium border border-emerald-400/20">พื้นที่สาธารณะ & สถานที่สำคัญ</span>
+              <h2 class="text-xl font-bold mt-1 text-white">เขตกรุงเทพฯ และปทุมธานี</h2>
+              <p class="text-xs text-emerald-100/80 mt-0.5 font-light">ข้อมูลอัปเดตล่าสุด: <span id="lastUpdatedTime" class="font-medium text-emerald-200">วันนี้ 12:10 น.</span></p>
+            </div>
+            <div class="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-emerald-200">
+              <i class="fa-solid fa-city text-lg"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Summary Cards Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-slate-700/60 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-center text-slate-400 text-xs mb-1">
+              <span>จุดขยะสาธารณะทั้งหมด</span>
+              <i class="fa-solid fa-trash-can text-slate-500"></i>
+            </div>
+            <div class="text-2xl font-bold text-white flex items-baseline space-x-1">
+              <span>12</span>
+              <span class="text-xs font-normal text-slate-400">จุด</span>
+            </div>
+            <div class="mt-2 flex items-center text-[10px] text-emerald-400 space-x-1">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>ใช้งานได้ปกติ 9 จุด</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-800/80 p-3.5 rounded-2xl border border-rose-500/30 shadow-sm relative overflow-hidden bg-gradient-to-br from-slate-800 to-rose-950/20">
+            <div class="flex justify-between items-center text-slate-400 text-xs mb-1">
+              <span class="text-rose-300 font-medium">รอการเก็บขยะ</span>
+              <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-rose-400 flex items-baseline space-x-1">
+              <span id="pendingCount">3</span>
+              <span class="text-xs font-normal text-slate-400">จุด (ขยะล้น)</span>
+            </div>
+            <div class="mt-2 flex items-center text-[10px] text-rose-300 space-x-1">
+              <i class="fa-solid fa-clock"></i>
+              <span>ต้องเข้าจัดการภายในวันนี้</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Critical Bins Needs Action -->
+        <div class="space-y-2.5">
+          <div class="flex justify-between items-center px-1">
+            <h3 class="text-sm font-semibold text-slate-200 flex items-center space-x-2">
+              <i class="fa-solid fa-circle-exclamation text-amber-400"></i>
+              <span>จุดสาธารณะที่ต้องเข้าตรวจด่วน</span>
+            </h3>
+            <button onclick="switchTab('map')" class="text-xs text-emerald-400 hover:text-emerald-300 flex items-center space-x-1">
+              <span>ดูบนแผนที่</span>
+              <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+          </div>
+
+          <!-- Card 1: Lumphini Park -->
+          <div class="bg-slate-800/90 rounded-2xl p-3.5 border border-slate-700/80 space-y-3 hover:border-slate-600 transition shadow-md">
+            <div class="flex justify-between items-start">
+              <div class="flex space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 flex-shrink-0">
+                  <i class="fa-solid fa-tree text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-sm text-slate-100">จุดที่ 1: สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)</h4>
+                  <p class="text-xs text-slate-400 mt-0.5 flex items-center space-x-2">
+                    <span class="text-rose-400 font-medium"><i class="fa-solid fa-chart-simple"></i> ความจุ 95% (ขยะล้น)</span>
+                  </p>
+                  <p class="text-[11px] text-slate-300 font-medium mt-1 bg-slate-900/60 px-2 py-0.5 rounded inline-block border border-slate-700/50">
+                    <i class="fa-regular fa-clock text-amber-400 mr-1"></i>อัปเดตเมื่อ: 10 นาทีที่แล้ว (12:00 น.)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-700/50">
+              <button onclick="openBinPhotoModal('สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)', 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80', '95%')" class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 text-xs py-2 px-3 rounded-xl border border-slate-600/60 flex items-center justify-center space-x-1.5 transition active:scale-95 font-medium">
+                <i class="fa-solid fa-image text-emerald-400"></i>
+                <span>ดูรูปสถานที่จริง</span>
+              </button>
+              <button onclick="quickReport('จุดที่ 1: สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 px-3 rounded-xl font-medium flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-600/20 transition active:scale-95">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>แจ้งจัดการทันที</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 2: Future Park Rangsit -->
+          <div class="bg-slate-800/90 rounded-2xl p-3.5 border border-slate-700/80 space-y-3 hover:border-slate-600 transition shadow-md">
+            <div class="flex justify-between items-start">
+              <div class="flex space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 flex-shrink-0">
+                  <i class="fa-solid fa-bag-shopping text-lg"></i>
+                </div>
+                <div>
+                  <h4 class="font-semibold text-sm text-slate-100">จุดที่ 2: ฟิวเจอร์พาร์ค รังสิต (ประตูทางเข้าหลัก)</h4>
+                  <p class="text-xs text-slate-400 mt-0.5">
+                    <span class="text-amber-400 font-medium"><i class="fa-solid fa-chart-simple"></i> ความจุ 85% (ใกล้เต็ม)</span>
+                  </p>
+                  <p class="text-[11px] text-slate-300 font-medium mt-1 bg-slate-900/60 px-2 py-0.5 rounded inline-block border border-slate-700/50">
+                    <i class="fa-regular fa-clock text-amber-400 mr-1"></i>อัปเดตเมื่อ: 25 นาทีที่แล้ว (11:45 น.)
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-700/50">
+              <button onclick="openBinPhotoModal('ฟิวเจอร์พาร์ค รังสิต (ประตูทางเข้าหลัก)', 'https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=600&q=80', '85%')" class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 text-xs py-2 px-3 rounded-xl border border-slate-600/60 flex items-center justify-center space-x-1.5 transition active:scale-95 font-medium">
+                <i class="fa-solid fa-image text-emerald-400"></i>
+                <span>ดูรูปสถานที่จริง</span>
+              </button>
+              <button onclick="quickReport('จุดที่ 2: ฟิวเจอร์พาร์ค รังสิต (ประตูทางเข้าหลัก)')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 px-3 rounded-xl font-medium flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-600/20 transition active:scale-95">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>แจ้งจัดการทันที</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HIGHLIGHT DESIGN: Tip Card -->
+        <div class="bg-gradient-to-br from-emerald-900/90 via-slate-800 to-teal-900/80 p-4 rounded-2xl border border-emerald-500/40 shadow-xl space-y-2 relative overflow-hidden">
+          <div class="absolute -right-3 -top-3 w-16 h-16 bg-emerald-400/10 rounded-full blur-lg"></div>
+          <div class="flex items-center space-x-2 text-emerald-300 font-semibold text-sm">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-lightbulb"></i>
+            </span>
+            <span class="text-white">เกร็ดน่ารู้ & ทิปเล็ก ๆ รักษ์โลก 🌿</span>
+          </div>
+          <p class="text-xs text-emerald-100/90 leading-relaxed font-light pl-9">
+            ในพื้นที่สาธารณะที่มีคนหนาแน่น การกดแจ้งขยะเต็มพร้อมแนบรูปถ่าย จะช่วยให้ กทม. และเทศบาลเข้าจัดเก็บขยะได้รวดเร็วขึ้นถึง 2 เท่า!
+          </p>
+        </div>
+      </section>
+
+      <!-- PAGE 2: INTERACTIVE MAP -->
+      <section id="page-map" class="hidden space-y-3">
+        <!-- Interactive Filter Bar -->
+        <div class="bg-slate-900/90 p-2 rounded-2xl border border-slate-800 shadow-md">
+          <p class="text-[11px] text-slate-400 font-medium mb-1.5 px-1 flex items-center justify-between">
+            <span><i class="fa-solid fa-filter text-emerald-400 mr-1"></i> กรองสถานะจุดขยะ:</span>
+            <span id="mapFilterStatus" class="text-emerald-400 font-normal">แสดงทั้งหมด (12 จุด)</span>
+          </p>
+          <div class="flex items-center space-x-1.5 overflow-x-auto no-scrollbar pb-1">
+            <button onclick="filterMap('all')" id="filter-all" class="filter-btn active bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-xl font-medium whitespace-nowrap border border-emerald-500 transition">
+              ทั้งหมด (12)
+            </button>
+            <button onclick="filterMap('full')" id="filter-full" class="filter-btn bg-slate-800 text-rose-400 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-xl font-medium whitespace-nowrap border border-slate-700 transition">
+              🔴 เต็มแล้ว (3)
+            </button>
+            <button onclick="filterMap('warning')" id="filter-warning" class="filter-btn bg-slate-800 text-amber-400 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-xl font-medium whitespace-nowrap border border-slate-700 transition">
+              🟠 ใกล้เต็ม (2)
+            </button>
+            <button onclick="filterMap('empty')" id="filter-empty" class="filter-btn bg-slate-800 text-emerald-400 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-xl font-medium whitespace-nowrap border border-slate-700 transition">
+              🟢 ว่าง (7)
+            </button>
+          </div>
+        </div>
+
+        <!-- Simulated Interactive Map Container -->
+        <div class="relative w-full h-[460px] rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl map-grid-bg flex flex-col justify-between p-3">
+          
+          <!-- Map Header Info overlay -->
+          <div class="bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-700/80 text-xs flex justify-between items-center z-10">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-map-location-dot text-emerald-400 text-sm"></i>
+              <span class="font-medium text-slate-200">แผนที่จุดทิ้งขยะสาธารณะ (Google Maps)</span>
+            </div>
+            <span class="text-[10px] bg-slate-800 text-emerald-400 px-2 py-0.5 rounded border border-slate-700 font-medium">Google Live GPS</span>
+          </div>
+
+          <!-- MAP PINS AREA (Positioned dynamically over Map Canvas) -->
+          <div class="absolute inset-0 z-0">
+            <!-- Road Vector Lines Overlay -->
+            <svg class="w-full h-full opacity-25 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M 30,80 L 350,80 L 350,240 L 50,240 L 50,400 L 350,400" stroke="#64748b" stroke-width="12" fill="none" stroke-linecap="round"/>
+              <path d="M 200,30 L 200,430" stroke="#64748b" stroke-width="8" fill="none"/>
+            </svg>
+
+            <!-- Pin 1: สวนลุมพินี (Full - Red) -->
+            <button onclick="selectMapBin(1)" data-status="full" class="map-pin absolute top-[110px] left-[130px] transform -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+              <span class="relative flex h-8 w-8 items-center justify-center">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-7 w-7 bg-rose-600 text-white items-center justify-center shadow-lg border-2 border-white text-xs font-bold">
+                  <i class="fa-solid fa-tree"></i>
+                </span>
+              </span>
+              <span class="bg-slate-900/90 text-rose-300 text-[10px] px-1.5 py-0.5 rounded font-medium border border-rose-500/40 absolute -bottom-5 left-1/2 transform -translate-x-1/2 whitespace-nowrap shadow">สวนลุมพินี (95%)</span>
+            </button>
+
+            <!-- Pin 2: ฟิวเจอร์พาร์ค รังสิต (Warning - Amber) -->
+            <button onclick="selectMapBin(2)" data-status="warning" class="map-pin absolute top-[190px] left-[270px] transform -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+              <span class="relative flex h-8 w-8 items-center justify-center">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-7 w-7 bg-amber-500 text-white items-center justify-center shadow-lg border-2 border-white text-xs font-bold">
+                  <i class="fa-solid fa-bag-shopping"></i>
+                </span>
+              </span>
+              <span class="bg-slate-900/90 text-amber-300 text-[10px] px-1.5 py-0.5 rounded font-medium border border-amber-500/40 absolute -bottom-5 left-1/2 transform -translate-x-1/2 whitespace-nowrap shadow">ฟิวเจอร์พาร์ค (85%)</span>
+            </button>
+
+            <!-- Pin 3: สยามสแควร์ (Empty - Green) -->
+            <button onclick="selectMapBin(3)" data-status="empty" class="map-pin absolute top-[60px] left-[60px] transform -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+              <span class="relative flex h-7 w-7 items-center justify-center">
+                <span class="relative inline-flex rounded-full h-6 w-6 bg-emerald-500 text-white items-center justify-center shadow-md border-2 border-white text-xs">
+                  <i class="fa-solid fa-shirt text-[10px]"></i>
+                </span>
+              </span>
+              <span class="bg-slate-900/90 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-medium border border-emerald-500/40 absolute -bottom-5 left-1/2 transform -translate-x-1/2 whitespace-nowrap shadow">สยามสแควร์ (20%)</span>
+            </button>
+
+            <!-- Pin 4: ตลาดจตุจักร (Full - Red) -->
+            <button onclick="selectMapBin(4)" data-status="full" class="map-pin absolute top-[310px] left-[100px] transform -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+              <span class="relative flex h-8 w-8 items-center justify-center">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-7 w-7 bg-rose-600 text-white items-center justify-center shadow-lg border-2 border-white text-xs font-bold">
+                  <i class="fa-solid fa-store"></i>
+                </span>
+              </span>
+              <span class="bg-slate-900/90 text-rose-300 text-[10px] px-1.5 py-0.5 rounded font-medium border border-rose-500/40 absolute -bottom-5 left-1/2 transform -translate-x-1/2 whitespace-nowrap shadow">ตลาดจตุจักร (90%)</span>
+            </button>
+
+            <!-- Pin 5: มหาวิทยาลัยรังสิต (Empty - Green) -->
+            <button onclick="selectMapBin(5)" data-status="empty" class="map-pin absolute top-[370px] left-[290px] transform -translate-x-1/2 -translate-y-1/2 group focus:outline-none">
+              <span class="relative flex h-7 w-7 items-center justify-center">
+                <span class="relative inline-flex rounded-full h-6 w-6 bg-emerald-500 text-white items-center justify-center shadow-md border-2 border-white text-xs">
+                  <i class="fa-solid fa-graduation-cap text-[10px]"></i>
+                </span>
+              </span>
+              <span class="bg-slate-900/90 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded font-medium border border-emerald-500/40 absolute -bottom-5 left-1/2 transform -translate-x-1/2 whitespace-nowrap shadow">ม.รังสิต (35%)</span>
+            </button>
+          </div>
+
+          <!-- Map Footer Legend -->
+          <div class="bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-700/80 text-[11px] flex justify-around items-center z-10">
+            <span class="flex items-center space-x-1 text-rose-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+              <span>เต็มแล้ว</span>
+            </span>
+            <span class="flex items-center space-x-1 text-amber-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span>ใกล้เต็ม</span>
+            </span>
+            <span class="flex items-center space-x-1 text-emerald-400">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>ว่าง/ปกติ</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 3: REPORT FORM WITH NATIVE FILE UPLOAD -->
+      <section id="page-report" class="hidden space-y-4">
+        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+          <div class="border-b border-slate-800 pb-2">
+            <h2 class="text-base font-bold text-slate-100 flex items-center space-x-2">
+              <i class="fa-solid fa-bullhorn text-emerald-400"></i>
+              <span>ฟอร์มแจ้งปัญหาขยะสาธารณะ</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">ระบุจุดทิ้งขยะและแนบรูปภาพถ่ายจากเครื่องของคุณเอง</p>
+          </div>
+
+          <form id="trashReportForm" onsubmit="handleFormSubmit(event)" class="space-y-3.5">
+            <!-- Dropdown Auto-fill Location -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">
+                จุดทิ้งขยะสาธารณะ <span class="text-rose-400">*</span>
+              </label>
+              <select id="reportLocationSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+                <option value="">-- เลือกจุดทิ้งขยะจากแผนที่ --</option>
+                <option value="จุดที่ 1: สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)">จุดที่ 1: สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)</option>
+                <option value="จุดที่ 2: ฟิวเจอร์พาร์ค รังสิต (ประตูทางเข้าหลัก)">จุดที่ 2: ฟิวเจอร์พาร์ค รังสิต (ประตูทางเข้าหลัก)</option>
+                <option value="จุดที่ 3: สยามสแควร์ (วัน Center Point)">จุดที่ 3: สยามสแควร์ (วัน Center Point)</option>
+                <option value="จุดที่ 4: ตลาดนัดจตุจักร (ประตู 3)">จุดที่ 4: ตลาดนัดจตุจักร (ประตู 3)</option>
+                <option value="จุดที่ 5: มหาวิทยาลัยรังสิต (หน้าตึก 1)">จุดที่ 5: มหาวิทยาลัยรังสิต (หน้าตึก 1)</option>
+              </select>
+            </div>
+
+            <!-- Fetch GPS Button -->
+            <div>
+              <button type="button" onclick="getGPSLocation()" id="gpsBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2.5 px-3 rounded-xl border border-slate-700 flex items-center justify-center space-x-2 transition">
+                <i class="fa-solid fa-location-crosshairs text-emerald-400"></i>
+                <span id="gpsBtnText">📍 ดึงพิกัด GPS ปัจจุบันของฉัน</span>
+              </button>
+            </div>
+
+            <!-- NATIVE FILE UPLOAD AREA (Pick user's own file) -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">
+                📸 แนบไฟล์รูปถ่ายขยะจากอุปกรณ์ของคุณ <span class="text-emerald-400">(เลือกไฟล์เอง)</span>
+              </label>
+              
+              <!-- Hidden native file input element -->
+              <input type="file" id="userImageInput" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+
+              <div id="dropZone" onclick="triggerNativeFilePicker()" class="border-2 border-dashed border-slate-700 hover:border-emerald-500 bg-slate-800/50 rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center space-y-2">
+                
+                <!-- Live Thumbnail Preview container -->
+                <div id="photoPreviewContainer" class="hidden relative w-full h-44 rounded-xl overflow-hidden border border-slate-600 bg-slate-950 flex items-center justify-center">
+                  <img id="photoPreview" src="" alt="User Selected File Preview" class="w-full h-full object-contain">
+                  <button type="button" onclick="clearUserFile(event)" class="absolute top-2 right-2 bg-rose-600 hover:bg-rose-500 text-white rounded-full p-1.5 text-xs shadow-lg transition">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                  <div class="absolute bottom-2 left-2 bg-slate-900/90 text-emerald-300 text-[10px] px-2 py-0.5 rounded border border-emerald-500/40 backdrop-blur-md">
+                    <i class="fa-solid fa-file-image mr-1"></i><span id="fileNameDisplay">รูปถ่ายของคุณ</span>
+                  </div>
+                </div>
+
+                <!-- Default Upload Placeholder -->
+                <div id="uploadPlaceholder" class="space-y-1.5 py-2">
+                  <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto text-xl border border-emerald-500/30">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                  </div>
+                  <p class="text-xs text-slate-200 font-medium">กดที่นี่เพื่อเลือกรูปถ่ายจากเครื่อง หรือถ่ายภาพใหม่</p>
+                  <p class="text-[11px] text-slate-400">รองรับไฟล์ JPG, PNG, WEBP (แสดงผลพรีวิวแบบ Real-time)</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Waste Type Chips / Radio -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">
+                ประเภทขยะที่พบ
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="cursor-pointer">
+                  <input type="radio" name="wasteType" value="ทั่วไป" class="peer hidden" checked>
+                  <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-800 peer-checked:border-emerald-500 peer-checked:bg-emerald-950/40 text-xs text-slate-300 peer-checked:text-emerald-300 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-trash-can text-slate-400 peer-checked:text-emerald-400"></i>
+                    <span>ขยะทั่วไป/ล้นถัง</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="wasteType" value="อันตราย" class="peer hidden">
+                  <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-800 peer-checked:border-rose-500 peer-checked:bg-rose-950/40 text-xs text-slate-300 peer-checked:text-rose-300 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-biohazard text-slate-400 peer-checked:text-rose-400"></i>
+                    <span>ขยะอันตราย/พิษ</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="wasteType" value="เปียก" class="peer hidden">
+                  <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-800 peer-checked:border-amber-500 peer-checked:bg-amber-950/40 text-xs text-slate-300 peer-checked:text-amber-300 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-apple-whole text-slate-400 peer-checked:text-amber-400"></i>
+                    <span>ขยะเปียก/ส่งกลิ่น</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="wasteType" value="รีไซเคิล" class="peer hidden">
+                  <div class="p-2.5 rounded-xl border border-slate-700 bg-slate-800 peer-checked:border-teal-500 peer-checked:bg-teal-950/40 text-xs text-slate-300 peer-checked:text-teal-300 flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-recycle text-slate-400 peer-checked:text-teal-400"></i>
+                    <span>ขยะรีไซเคิล</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Note Textarea -->
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1">
+                รายละเอียดเพิ่มเติม (ถ้ามี)
+              </label>
+              <textarea id="reportNote" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition" placeholder="เช่น ฝาถังขยะชำรุด, ขยะกองล้นออกมาภายนอก"></textarea>
+            </div>
+
+            <!-- DEMO WARNING BOX -->
+            <div class="bg-amber-950/60 border border-amber-500/60 rounded-xl p-3 flex items-start space-x-2 text-amber-200">
+              <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm mt-0.5 flex-shrink-0"></i>
+              <div class="text-xs">
+                <span class="font-bold text-amber-300">หมายเหตุสำคัญ:</span>
+                <p class="text-[11px] text-amber-100/90 leading-normal mt-0.5">
+                  การส่งข้อมูลนี้เป็นการจำลองระบบ (Prototype Demo) ข้อมูลและรูปภาพจะบันทึกลงในหน้ารายงานของท่านทันที
+                </p>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition active:scale-98 flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>ส่งรายงานการแจ้งปัญหา</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- PAGE 4: MY REPORTS & ECO POINTS -->
+      <section id="page-reports-points" class="hidden space-y-4">
+        
+        <!-- Eco Points Card -->
+        <div class="bg-gradient-to-r from-teal-900 via-emerald-800 to-emerald-900 rounded-2xl p-4 border border-emerald-500/40 shadow-xl space-y-3 relative overflow-hidden text-white">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="bg-white/10 text-emerald-200 text-[10px] px-2.5 py-0.5 rounded-full font-medium">คะแนนสะสมรักษ์โลก</span>
+              <div class="flex items-baseline space-x-2 mt-1">
+                <span id="userPoints" class="text-3xl font-extrabold text-amber-300">120</span>
+                <span class="text-xs text-emerald-100 font-light">แต้ม 🌿</span>
+              </div>
+            </div>
+            <button onclick="openRewardsModal()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs px-3 py-2 rounded-xl font-bold shadow-lg flex items-center space-x-1.5 transition active:scale-95">
+              <i class="fa-solid fa-gift text-sm"></i>
+              <span>🎁 แลกของรางวัล</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-emerald-100/80 font-light border-t border-white/10 pt-2">
+            ได้รับ +20 แต้ม ทุกครั้งที่แจ้งรายงานขยะสาธารณะเต็มอย่างถูกต้อง
+          </p>
+        </div>
+
+        <!-- Push Notification Toggle Switch -->
+        <div class="bg-slate-800/90 p-3.5 rounded-2xl border border-slate-700/80 flex items-center justify-between shadow-md">
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+              <h4 class="text-xs font-semibold text-slate-200">เปิดการแจ้งเตือน Push Notification</h4>
+              <p class="text-[10px] text-slate-400">รับแจ้งเตือนเมื่อเจ้าหน้าที่เข้าเก็บขยะเสร็จสิ้น</p>
+            </div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="pushToggle" class="sr-only peer" checked onchange="togglePushNotif(this)">
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+
+        <!-- Section: My Tickets Timeline -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-semibold text-slate-200 flex items-center space-x-2 px-1">
+            <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
+            <span>ประวัติการแจ้งรายงานของฉัน</span>
+          </h3>
+
+          <div id="ticketsList" class="space-y-3">
+            <!-- Ticket Item 1 -->
+            <div class="bg-slate-800/90 rounded-2xl p-3.5 border border-slate-700/80 space-y-3 shadow-md">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-medium">
+                    กำลังดำเนินการ
+                  </span>
+                  <h4 class="font-semibold text-xs text-slate-100 mt-1.5">สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)</h4>
+                  <p class="text-[11px] text-slate-400">ประเภท: ขยะทั่วไป/ล้นถัง • วันนี้ 12:00 น.</p>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono">#TK-9012</span>
+              </div>
+
+              <!-- TIMELINE WITH HIGH CONTRAST -->
+              <div class="pt-2 border-t border-slate-700/60">
+                <p class="text-[11px] font-medium text-slate-300 mb-2">ลำดับสถานะการแก้ไข:</p>
+                <div class="relative flex items-center justify-between text-[10px]">
+                  
+                  <div class="absolute left-0 top-1/2 transform -translate-y-1/2 h-0.5 bg-slate-700 w-full z-0"></div>
+                  <div class="absolute left-0 top-1/2 transform -translate-y-1/2 h-0.5 bg-emerald-500 w-1/2 z-0"></div>
+
+                  <div class="relative z-10 flex flex-col items-center bg-slate-800 px-1">
+                    <span class="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-[10px] shadow">
+                      <i class="fa-solid fa-check"></i>
+                    </span>
+                    <span class="text-emerald-400 font-medium mt-1">1. รับเรื่องแล้ว</span>
+                  </div>
+
+                  <div class="relative z-10 flex flex-col items-center bg-slate-800 px-1">
+                    <span class="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[10px] shadow animate-pulse">
+                      2
+                    </span>
+                    <span class="text-amber-300 font-semibold mt-1">2. กำลังดำเนินการ</span>
+                  </div>
+
+                  <div class="relative z-10 flex flex-col items-center bg-slate-800 px-1">
+                    <span class="w-5 h-5 rounded-full bg-slate-700 text-slate-300 border border-slate-500 flex items-center justify-center font-bold text-[10px]">
+                      3
+                    </span>
+                    <span class="text-slate-300 font-medium mt-1">3. แก้ไขเรียบร้อย</span>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- Ticket Item 2 (Completed) -->
+            <div class="bg-slate-800/90 rounded-2xl p-3.5 border border-slate-700/80 space-y-3 shadow-md">
+              <div class="flex justify-between items-start">
+                <div>
+                  <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+                    แก้ไขเรียบร้อยแล้ว
+                  </span>
+                  <h4 class="font-semibold text-xs text-slate-100 mt-1.5">สยามสแควร์ (วัน Center Point)</h4>
+                  <p class="text-[11px] text-slate-400">ประเภท: ขยะรีไซเคิล • เมื่อวานนี้ 15:10 น.</p>
+                </div>
+                <span class="text-[10px] text-slate-400 font-mono">#TK-8950</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION BAR WITH EXPLICIT TEXT LABELS -->
+    <nav class="bg-slate-900/95 backdrop-blur-md border-t border-slate-800 absolute bottom-0 left-0 right-0 z-30 px-3 py-2">
+      <div class="flex justify-around items-center">
+        
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn active flex flex-col items-center space-y-1 text-emerald-400 transition">
+          <i class="fa-solid fa-chart-pie text-lg"></i>
+          <span class="text-[11px] font-medium">Dashboard</span>
+        </button>
+
+        <button onclick="switchTab('map')" id="nav-map" class="nav-btn flex flex-col items-center space-y-1 text-slate-400 hover:text-emerald-400 transition">
+          <i class="fa-solid fa-map-location-dot text-lg"></i>
+          <span class="text-[11px] font-medium">แผนที่</span>
+        </button>
+
+        <button onclick="switchTab('report')" id="nav-report" class="nav-btn flex flex-col items-center space-y-1 text-slate-400 hover:text-emerald-400 transition">
+          <i class="fa-solid fa-circle-plus text-lg"></i>
+          <span class="text-[11px] font-medium">แจ้งปัญหา</span>
+        </button>
+
+        <button onclick="switchTab('reports-points')" id="nav-reports-points" class="nav-btn flex flex-col items-center space-y-1 text-slate-400 hover:text-emerald-400 transition">
+          <i class="fa-solid fa-clipboard-list text-lg"></i>
+          <span class="text-[11px] font-medium">รายงาน/แต้ม</span>
+        </button>
+
+      </div>
+    </nav>
+
+    <!-- MODAL 1: BIN PHOTO PREVIEW MODAL -->
+    <div id="binPhotoModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl modal-enter">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+          <h3 id="modalBinTitle" class="font-bold text-sm text-slate-100">ภาพสถานที่จริง</h3>
+          <button onclick="closeModal('binPhotoModal')" class="text-slate-400 hover:text-white p-1">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+        <div class="p-4 space-y-3">
+          <div class="relative h-56 rounded-2xl overflow-hidden border border-slate-700">
+            <img id="modalBinImage" src="" alt="Real Bin Photo" class="w-full h-full object-cover">
+            <span id="modalBinBadge" class="absolute top-3 right-3 bg-rose-600 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-lg">
+              ความจุ 95%
+            </span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            <i class="fa-solid fa-circle-info text-emerald-400 mr-1"></i>
+            ภาพถ่ายสถานที่จริงจากจุดติดตั้งเซ็นเซอร์ตรวจจับขยะสาธารณะ
+          </p>
+          <button onclick="closeModal('binPhotoModal')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-medium border border-slate-700">
+            ปิดหน้าต่าง
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: MAP BIN INTERACTIVE BOTTOM SHEET (REAL GOOGLE MAPS NAVIGATION) -->
+    <div id="mapBinModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 hidden flex items-end justify-center">
+      <div class="bg-slate-900 border-t border-slate-700 w-full max-w-md rounded-t-3xl p-4 space-y-3 modal-enter shadow-2xl">
+        <div class="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-1"></div>
+        <div class="flex justify-between items-start">
+          <div>
+            <span id="sheetBinStatus" class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-medium">
+              🔴 เต็มแล้ว
+            </span>
+            <h3 id="sheetBinTitle" class="font-bold text-sm text-slate-100 mt-1">สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)</h3>
+            <p id="sheetBinCoords" class="text-[11px] text-emerald-400 font-mono mt-0.5">
+              <i class="fa-solid fa-location-dot"></i> GPS: 13.7299, 100.5381
+            </p>
+          </div>
+          <button onclick="closeModal('mapBinModal')" class="text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-xs text-slate-300">
+            <span>ระดับขยะสะสม:</span>
+            <span id="sheetCapacityText" class="font-bold text-rose-400">95%</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+            <div id="sheetProgressBar" class="bg-rose-500 h-full rounded-full" style="width: 95%;"></div>
+          </div>
+        </div>
+
+        <!-- Action Buttons: Real Google Maps Directions -->
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button id="sheetNavBtn" onclick="" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2.5 rounded-xl border border-slate-700 flex items-center justify-center space-x-1.5 font-medium transition active:scale-95">
+            <i class="fa-solid fa-compass text-emerald-400"></i>
+            <span>🧭 นำทาง (Google Maps จริง)</span>
+          </button>
+          <button id="sheetReportBtn" onclick="" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2.5 rounded-xl font-medium flex items-center justify-center space-x-1.5 shadow-lg shadow-emerald-600/20 transition active:scale-95">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>🚨 แจ้งขยะเต็มจุดนี้</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: REWARD CATALOG MODAL -->
+    <div id="rewardsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl modal-enter">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <span class="text-amber-400 text-lg"><i class="fa-solid fa-gift"></i></span>
+            <h3 class="font-bold text-sm text-slate-100">แคตตาล็อกของรางวัลรักษ์โลก</h3>
+          </div>
+          <button onclick="closeModal('rewardsModal')" class="text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <div class="p-4 space-y-3 max-h-[60vh] overflow-y-auto no-scrollbar">
+          
+          <!-- Reward Item 1 -->
+          <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-mug-hot"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-xs text-slate-100">คูปองส่วนลด 20 บาท ร้านกาแฟ</h4>
+                <p class="text-[10px] text-slate-400">ใช้สะสมที่พันธมิตรร้านค้า</p>
+                <span class="text-[11px] text-amber-300 font-bold">50 แต้ม</span>
+              </div>
+            </div>
+            <button onclick="redeemReward('คูปองกาแฟ 20 บาท', 50)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-xl font-medium active:scale-95 transition">
+              แลกรับ
+            </button>
+          </div>
+
+          <!-- Reward Item 2 -->
+          <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-train"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-xs text-slate-100">ส่วนลดค่าเดินทาง BTS/MRT 30 บาท</h4>
+                <p class="text-[10px] text-slate-400">แลกรับเป็นคูปองส่วนลดบัตรโดยสาร</p>
+                <span class="text-[11px] text-amber-300 font-bold">100 แต้ม</span>
+              </div>
+            </div>
+            <button onclick="redeemReward('ส่วนลด BTS/MRT 30 บาท', 100)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-xl font-medium active:scale-95 transition">
+              แลกรับ
+            </button>
+          </div>
+
+          <!-- Reward Item 3 -->
+          <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-leaf"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-xs text-slate-100">ถุงขยะย่อยสลายได้ (1 แพ็ค)</h4>
+                <p class="text-[10px] text-slate-400">รับได้ที่จุดบริการเขต</p>
+                <span class="text-[11px] text-amber-300 font-bold">80 แต้ม</span>
+              </div>
+            </div>
+            <button onclick="redeemReward('ถุงขยะย่อยสลายได้ 1 แพ็ค', 80)" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-xl font-medium active:scale-95 transition">
+              แลกรับ
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: V1 vs V2 SUMMARY MODAL -->
+    <div id="comparisonModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl modal-enter space-y-3 p-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-check-double text-emerald-400"></i>
+            <h3 class="font-bold text-sm text-slate-100">สรุปการปรับปรุง V2 จาก Feedback</h3>
+          </div>
+          <button onclick="closeModal('comparisonModal')" class="text-slate-400 hover:text-white">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+
+        <div class="space-y-2 text-xs text-slate-300 max-h-[60vh] overflow-y-auto no-scrollbar pr-1">
+          <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+            <p class="font-semibold text-emerald-400">1. รองรับการแนบไฟล์รูปภาพของคุณเอง</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">ใช้ Native File Input + FileReader API ให้คุณเลือกภาพขยะจากมือถือหรือคอมพิวเตอร์ของคุณเองได้จริง พร้อมพรีวิวรูป</p>
+          </div>
+          <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+            <p class="font-semibold text-emerald-400">2. นำทางด้วย Google Maps พิกัดจริง</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">พิกัดสถานที่สาธารณะ (สวนลุมฯ, สยามฯ, ฟิวเจอร์พาร์ค) สามารถกดปุ่มนำทางเพื่อเปิด Google Maps ได้ทันที</p>
+          </div>
+          <div class="bg-slate-800 p-2.5 rounded-xl border border-slate-700">
+            <p class="font-semibold text-emerald-400">3. Bottom Navigation Text Labels</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">เพิ่มชื่อข้อความกำกับใต้ไอคอนครบทุกตัว ป้องกันผู้ใช้สับสน</p>
+          </div>
+        </div>
+
+        <button onclick="closeModal('comparisonModal')" class="w-full bg-emerald-600 text-white text-xs font-medium py-2.5 rounded-xl">
+          เข้าใจแล้ว (กลับสู่แอป)
+        </button>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-xs px-4 py-2.5 rounded-2xl shadow-2xl border border-emerald-400/40 z-50 hidden transition-all flex items-center space-x-2">
+      <i class="fa-solid fa-circle-check"></i>
+      <span id="toastMsg">บันทึกข้อมูลเรียบร้อยแล้ว</span>
+    </div>
+
+  </div>
+
+  <script>
+    // State Variables
+    let currentPoints = 120;
+    let customUploadedDataUrl = null; // Stores user selected image base64 data URL
+
+    // Map Bin Data Mockup with REAL GPS Coordinates in Thailand (Bangkok & Pathum Thani)
+    const binData = {
+      1: {
+        title: "จุดที่ 1: สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)",
+        lat: 13.7299,
+        lng: 100.5381,
+        capacity: 95,
+        status: "full",
+        statusText: "🔴 เต็มแล้ว (ขยะล้น)",
+        img: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80"
+      },
+      2: {
+        title: "จุดที่ 2: ฟิวเจอร์พาร์ค รังสิต (ประตูทางเข้าหลัก)",
+        lat: 13.9892,
+        lng: 100.6177,
+        capacity: 85,
+        status: "warning",
+        statusText: "🟠 ใกล้เต็ม",
+        img: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=600&q=80"
+      },
+      3: {
+        title: "จุดที่ 3: สยามสแควร์ (วัน Center Point)",
+        lat: 13.7451,
+        lng: 100.5317,
+        capacity: 20,
+        status: "empty",
+        statusText: "🟢 ว่าง/ปกติ",
+        img: "https://images.unsplash.com/photo-1528323273322-d81458248d40?auto=format&fit=crop&w=600&q=80"
+      },
+      4: {
+        title: "จุดที่ 4: ตลาดนัดจตุจักร (ประตู 3)",
+        lat: 13.8000,
+        lng: 100.5502,
+        capacity: 90,
+        status: "full",
+        statusText: "🔴 เต็มแล้ว",
+        img: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=600&q=80"
+      },
+      5: {
+        title: "จุดที่ 5: มหาวิทยาลัยรังสิต (หน้าตึก 1)",
+        lat: 13.9649,
+        lng: 100.5872,
+        capacity: 35,
+        status: "empty",
+        statusText: "🟢 ว่าง/ปกติ",
+        img: "https://images.unsplash.com/photo-1528323273322-d81458248d40?auto=format&fit=crop&w=600&q=80"
+      }
+    };
+
+    // Tab Navigation Logic
+    function switchTab(tabId) {
+      document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+      document.getElementById(`page-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-emerald-400', 'active');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('text-emerald-400', 'active');
+      }
+
+      document.getElementById('mainContent').scrollTop = 0;
+    }
+
+    // Live Refresh Real-time Simulation
+    function triggerLiveRefresh() {
+      const icon = document.getElementById('refreshIcon');
+      icon.classList.add('fa-spin');
+      showToast("🔄 กำลังอัปเดตข้อมูล Real-time...");
+
+      setTimeout(() => {
+        icon.classList.remove('fa-spin');
+        const now = new Date();
+        const timeStr = `วันนี้ ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} น.`;
+        document.getElementById('lastUpdatedTime').innerText = timeStr;
+        showToast("✅ อัปเดตข้อมูลล่าสุดเรียบร้อยแล้ว");
+      }, 1000);
+    }
+
+    // NATIVE FILE PICKER & PREVIEW LOGIC
+    function triggerNativeFilePicker() {
+      // Trigger native input click
+      document.getElementById('userImageInput').click();
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast("⚠️ กรุณาเลือกไฟล์ภาพถ่ายเท่านั้น (JPG, PNG, WEBP)");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        customUploadedDataUrl = e.target.result;
+        
+        // Show Live Preview
+        document.getElementById('photoPreview').src = customUploadedDataUrl;
+        document.getElementById('fileNameDisplay').innerText = file.name;
+        document.getElementById('photoPreviewContainer').classList.remove('hidden');
+        document.getElementById('uploadPlaceholder').classList.add('hidden');
+        
+        showToast(`📸 แนบไฟล์ "${file.name}" สำเร็จ`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearUserFile(event) {
+      if (event) event.stopPropagation();
+      customUploadedDataUrl = null;
+      document.getElementById('userImageInput').value = "";
+      document.getElementById('photoPreview').src = "";
+      document.getElementById('photoPreviewContainer').classList.add('hidden');
+      document.getElementById('uploadPlaceholder').classList.remove('hidden');
+    }
+
+    // Modal Helpers
+    function openBinPhotoModal(title, imgUrl, cap) {
+      document.getElementById('modalBinTitle').innerText = title;
+      document.getElementById('modalBinImage').src = imgUrl;
+      document.getElementById('modalBinBadge').innerText = `ความจุ ${cap}`;
+      document.getElementById('binPhotoModal').classList.remove('hidden');
+    }
+
+    function openRewardsModal() {
+      document.getElementById('rewardsModal').classList.remove('hidden');
+    }
+
+    function toggleComparisonModal() {
+      document.getElementById('comparisonModal').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // Map Bin Interaction
+    function selectMapBin(binId) {
+      const bin = binData[binId];
+      if (!bin) return;
+
+      document.getElementById('sheetBinTitle').innerText = bin.title;
+      document.getElementById('sheetBinStatus').innerText = bin.statusText;
+      document.getElementById('sheetCapacityText').innerText = `${bin.capacity}%`;
+      document.getElementById('sheetBinCoords').innerHTML = `<i class="fa-solid fa-location-dot"></i> GPS: ${bin.lat}, ${bin.lng}`;
+      
+      const bar = document.getElementById('sheetProgressBar');
+      bar.style.width = `${bin.capacity}%`;
+      
+      if(bin.capacity > 80) {
+        bar.className = "bg-rose-500 h-full rounded-full";
+      } else if(bin.capacity > 50) {
+        bar.className = "bg-amber-500 h-full rounded-full";
+      } else {
+        bar.className = "bg-emerald-500 h-full rounded-full";
+      }
+
+      // Set REAL Google Maps Directions URL
+      document.getElementById('sheetNavBtn').onclick = function() {
+        openRealGoogleMaps(bin.lat, bin.lng, bin.title);
+      };
+
+      document.getElementById('sheetReportBtn').onclick = function() {
+        closeModal('mapBinModal');
+        quickReport(bin.title);
+      };
+
+      document.getElementById('mapBinModal').classList.remove('hidden');
+    }
+
+    // Open REAL Google Maps Directions in New Tab
+    function openRealGoogleMaps(lat, lng, destinationName) {
+      closeModal('mapBinModal');
+      showToast(`🧭 กำลังเปิด Google Maps นำทางไปยัง ${destinationName}`);
+      
+      const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+      
+      setTimeout(() => {
+        window.open(googleMapsUrl, '_blank');
+      }, 500);
+    }
+
+    // Map Filter Function
+    function filterMap(type) {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-emerald-600', 'text-white', 'active');
+        btn.classList.add('bg-slate-800');
+      });
+
+      const activeFilterBtn = document.getElementById(`filter-${type}`);
+      if(activeFilterBtn) {
+        activeFilterBtn.classList.remove('bg-slate-800');
+        activeFilterBtn.classList.add('bg-emerald-600', 'text-white', 'active');
+      }
+
+      const statusTextMap = {
+        all: "แสดงทั้งหมด (12 จุด)",
+        full: "🔴 แสดงเฉพาะจุดเต็มแล้ว (3 จุด)",
+        warning: "🟠 แสดงเฉพาะจุดใกล้เต็ม (2 จุด)",
+        empty: "🟢 แสดงเฉพาะจุดว่าง (7 จุด)"
+      };
+      document.getElementById('mapFilterStatus').innerText = statusTextMap[type];
+
+      document.querySelectorAll('.map-pin').forEach(pin => {
+        const pinStatus = pin.getAttribute('data-status');
+        if (type === 'all' || pinStatus === type) {
+          pin.style.display = 'block';
+        } else {
+          pin.style.display = 'none';
+        }
+      });
+    }
+
+    // Quick Report Auto-fill from Map or Card
+    function quickReport(locationName) {
+      switchTab('report');
+      const select = document.getElementById('reportLocationSelect');
+      select.value = locationName;
+      showToast(`📍 เลือก ${locationName} เรียบร้อยแล้ว`);
+    }
+
+    // GPS Location Simulation
+    function getGPSLocation() {
+      const btnText = document.getElementById('gpsBtnText');
+      btnText.innerText = "⏳ กำลังค้นหาพิกัด GPS...";
+      
+      setTimeout(() => {
+        btnText.innerText = "✅ GPS: 13.7299° N, 100.5381° E (สวนลุมพินี)";
+        document.getElementById('reportLocationSelect').value = "จุดที่ 1: สวนลุมพินี (ประตู 1 ฝั่งพระราม 4)";
+        showToast("📍 ดึงพิกัด GPS ปัจจุบันสำเร็จ");
+      }, 1000);
+    }
+
+    // Form Submit Handler
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const loc = document.getElementById('reportLocationSelect').value;
+      if (!loc) {
+        showToast("⚠️ กรุณาเลือกจุดทิ้งขยะก่อนส่งรายงาน");
+        return;
+      }
+
+      currentPoints += 20;
+      document.getElementById('userPoints').innerText = currentPoints;
+
+      const ticketContainer = document.getElementById('ticketsList');
+      const newTicketId = `#TK-${Math.floor(1000 + Math.random() * 9000)}`;
+      const selectedType = document.querySelector('input[name="wasteType"]:checked').value;
+
+      // Check if user uploaded a file
+      const userPhotoHtml = customUploadedDataUrl 
+        ? `<div class="mt-2 relative h-28 rounded-xl overflow-hidden border border-slate-700">
+             <img src="${customUploadedDataUrl}" class="w-full h-full object-cover">
+             <span class="absolute bottom-1 right-1 bg-slate-900/80 text-[9px] text-emerald-300 px-1.5 py-0.5 rounded">รูปถ่ายของคุณ</span>
+           </div>`
+        : '';
+
+      const newTicketHTML = `
+        <div class="bg-slate-800/90 rounded-2xl p-3.5 border border-emerald-500/40 space-y-3 shadow-md">
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
+                รับเรื่องแล้ว (+20 แต้ม 🌿)
+              </span>
+              <h4 class="font-semibold text-xs text-slate-100 mt-1.5">${loc}</h4>
+              <p class="text-[11px] text-slate-400">ประเภท: ขยะ${selectedType} • เมื่อครู่นี้</p>
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono">${newTicketId}</span>
+          </div>
+          
+          ${userPhotoHtml}
+
+          <div class="pt-2 border-t border-slate-700/60">
+            <p class="text-[11px] font-medium text-slate-300 mb-2">ลำดับสถานะการแก้ไข:</p>
+            <div class="relative flex items-center justify-between text-[10px]">
+              <div class="absolute left-0 top-1/2 transform -translate-y-1/2 h-0.5 bg-slate-700 w-full z-0"></div>
+              <div class="relative z-10 flex flex-col items-center bg-slate-800 px-1">
+                <span class="w-5 h-5 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-[10px]">
+                  <i class="fa-solid fa-check"></i>
+                </span>
+                <span class="text-emerald-400 font-medium mt-1">1. รับเรื่องแล้ว</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center bg-slate-800 px-1">
+                <span class="w-5 h-5 rounded-full bg-slate-700 text-slate-300 border border-slate-500 flex items-center justify-center font-bold text-[10px]">2</span>
+                <span class="text-slate-300 font-medium mt-1">2. กำลังดำเนินการ</span>
+              </div>
+              <div class="relative z-10 flex flex-col items-center bg-slate-800 px-1">
+                <span class="w-5 h-5 rounded-full bg-slate-700 text-slate-300 border border-slate-500 flex items-center justify-center font-bold text-[10px]">3</span>
+                <span class="text-slate-300 font-medium mt-1">3. แก้ไขเรียบร้อย</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      ticketContainer.insertAdjacentHTML('afterbegin', newTicketHTML);
+
+      document.getElementById('trashReportForm').reset();
+      clearUserFile(null);
+
+      showToast("🎉 ส่งรายงานสำเร็จ! รับ +20 แต้มรักษ์โลก");
+      
+      setTimeout(() => {
+        switchTab('reports-points');
+      }, 1200);
+    }
+
+    // Redeem Rewards
+    function redeemReward(rewardName, cost) {
+      if (currentPoints >= cost) {
+        currentPoints -= cost;
+        document.getElementById('userPoints').innerText = currentPoints;
+        closeModal('rewardsModal');
+        showToast(`🎉 แลกรับ "${rewardName}" เรียบร้อยแล้ว`);
+      } else {
+        showToast("❌ แต้มสะสมไม่เพียงพอ");
+      }
+    }
+
+    // Push Toggle Notification
+    function togglePushNotif(checkbox) {
+      if(checkbox.checked) {
+        showToast("🔔 เปิดการแจ้งเตือน Push Notification แล้ว");
+      } else {
+        showToast("🔕 ปิดการแจ้งเตือนแล้ว");
+      }
+    }
+
+    // Toast Message Helper
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
